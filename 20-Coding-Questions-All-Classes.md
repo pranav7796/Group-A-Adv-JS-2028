@@ -1,6 +1,6 @@
 # 20 Coding Questions – All 5 Classes (Advanced JavaScript)
 
-Each problem includes a **detailed problem statement**, **hints** (in the description only), **expected output**, and a **code stub** (boilerplate only; no hints in the stub).
+
 
 ---
 
