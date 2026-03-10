@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Advanced JS Exam Practice Editor</title>
+  <style>
+    :root {
+      --bg: #f7f3e8;
+      --paper: #fffdf8;
+      --ink: #1f2933;
+      --muted: #6b7280;
+      --brand: #0f766e;
+      --brand-2: #f59e0b;
+      --danger: #b91c1c;
+      --ok: #166534;
+      --line: #d6d3d1;
+      --code-bg: #1f2937;
+      --code-ink: #f9fafb;
+      --shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Space Grotesk", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1200px 500px at -15% -10%, #fde68a 0%, transparent 60%),
+        radial-gradient(1000px 500px at 115% 0%, #99f6e4 0%, transparent 55%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 24px auto;
+      padding: 16px;
+      animation: rise 420ms ease-out;
+    }
+
+    .header {
+      background: linear-gradient(110deg, #115e59, #0d9488);
+      color: #ecfeff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .title {
+      margin: 0;
+      font-size: clamp(1.4rem, 2vw, 2rem);
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 8px 0 0;
+      color: #ccfbf1;
+      font-size: 0.95rem;
+    }
+
+    .progress-wrap {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .exam-strip {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .pill {
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      color: #ecfeff;
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    .timer {
+      font-family: "JetBrains Mono", Consolas, monospace;
+      min-width: 88px;
+      text-align: center;
+    }
+
+    .progress {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.25);
+      overflow: hidden;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #fde68a, #f59e0b);
+      transition: width 200ms ease;
+    }
+
+    .layout {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .left {
+      padding: 16px;
+      max-height: calc(100vh - 160px);
+      overflow: auto;
+    }
+
+    .right {
+      padding: 12px;
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 10px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    select, button, textarea {
+      font: inherit;
+    }
+
+    select {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 8px;
+      background: #fff;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: transform 80ms ease, filter 120ms ease;
+    }
+
+    button:hover {
+      filter: brightness(0.95);
+    }
+
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .btn-main {
+      background: var(--brand);
+      color: white;
+    }
+
+    .btn-alt {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .btn-danger {
+      background: #fee2e2;
+      color: var(--danger);
+    }
+
+    .meta {
+      border: 1px dashed var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fffbeb;
+    }
+
+    .meta h2 {
+      margin: 0 0 8px;
+      font-size: 1.05rem;
+      line-height: 1.35;
+    }
+
+    .topic {
+      font-size: 0.85rem;
+      color: #92400e;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+
+    .prompt {
+      margin: 8px 0;
+      color: #374151;
+      font-size: 0.92rem;
+      line-height: 1.45;
+    }
+
+    .expected {
+      margin: 0;
+      padding: 8px;
+      border-radius: 8px;
+      background: #f3f4f6;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.84rem;
+      white-space: pre-wrap;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 380px;
+      resize: vertical;
+      border: 1px solid #111827;
+      border-radius: 12px;
+      padding: 12px;
+      line-height: 1.5;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      background: var(--code-bg);
+      color: var(--code-ink);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .status {
+      margin-left: auto;
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+
+    .output {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #0b1020;
+      color: #e5e7eb;
+      min-height: 120px;
+      padding: 10px;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.85rem;
+      overflow: auto;
+      white-space: pre-wrap;
+    }
+
+    .verdict {
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      padding: 8px;
+      font-size: 0.9rem;
+      background: #f8fafc;
+      color: #334155;
+    }
+
+    .verdict.good {
+      border-color: #86efac;
+      background: #f0fdf4;
+      color: #166534;
+      font-weight: 700;
+    }
+
+    .verdict.bad {
+      border-color: #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
+      font-weight: 700;
+    }
+
+    .ok { color: #86efac; }
+    .err { color: #fca5a5; }
+    .muted { color: #9ca3af; }
+
+    .q-list {
+      margin-top: 10px;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 6px;
+    }
+
+    .q-list button {
+      width: 100%;
+      text-align: left;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      color: #111827;
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+    }
+
+    .q-list button.active {
+      border-color: var(--brand);
+      background: #e6fffa;
+    }
+
+    .q-list button.done::after {
+      content: " solved";
+      color: var(--ok);
+      font-weight: 700;
+    }
+
+    @media (max-width: 980px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .left {
+        max-height: 330px;
+      }
+
+      textarea {
+        min-height: 300px;
+      }
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <section class="header">
+      <h1 class="title">Advanced JS Exam Practice Editor</h1>
+      <p class="subtitle">20 questions, one focused workspace. Write code, run instantly, track solved questions.</p>
+      <div class="progress-wrap">
+        <div class="progress" aria-label="Progress">
+          <span id="progressBar"></span>
+        </div>
+        <strong id="progressText">0 / 20 solved</strong>
+      </div>
+      <div class="exam-strip">
+        <span class="pill">Exam Mode</span>
+        <span class="pill timer" id="timerText">120:00</span>
+        <button class="btn-alt" id="startTimerBtn" type="button">Start Timer</button>
+        <button class="btn-alt" id="pauseTimerBtn" type="button">Pause</button>
+        <button class="btn-alt" id="resetTimerBtn" type="button">Reset</button>
+        <label class="pill"><input type="checkbox" id="autoSolve" checked /> Auto mark on correct</label>
+      </div>
+    </section>
+
+    <main class="layout">
+      <aside class="left card">
+        <div class="controls">
+          <select id="questionSelect" aria-label="Choose question"></select>
+          <button class="btn-alt" id="prevBtn">Prev</button>
+          <button class="btn-alt" id="nextBtn">Next</button>
+        </div>
+
+        <ul class="q-list" id="questionList"></ul>
+      </aside>
+
+      <section class="right card">
+        <div class="meta">
+          <p class="topic" id="topic"></p>
+          <h2 id="questionTitle"></h2>
+          <p class="prompt" id="questionPrompt"></p>
+          <p class="prompt"><strong>Expected output:</strong></p>
+          <pre class="expected" id="expectedOutput"></pre>
+        </div>
+
+        <textarea id="editor" spellcheck="false" aria-label="Code editor"></textarea>
+
+        <div class="actions">
+          <button class="btn-main" id="runBtn">Run Code</button>
+          <button class="btn-alt" id="resetBtn">Reset Starter</button>
+          <button class="btn-alt" id="copyBtn">Copy Code</button>
+          <button class="btn-alt" id="exportBtn">💾 Export Progress</button>
+          <button class="btn-alt" id="importBtn">📥 Import Progress</button>
+          <input type="file" id="importFile" accept=".json" style="display:none;" />
+          <button class="btn-danger" id="clearAllBtn">Clear All Saved</button>
+          <label><input type="checkbox" id="markSolved" /> Mark solved</label>
+          <span class="status" id="statusText">Autosave on</span>
+        </div>
+
+        <div class="output" id="output">Console output will appear here.</div>
+        <div class="verdict" id="verdict">Run your code to check correctness.</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const QUESTIONS = [
+      {
+        id: 1,
+        topic: "Class 1 - this",
+        title: "Fix this in Object Method and Nested Function",
+        prompt: "Keep user.greet() call style unchanged and make both logs print Alice.",
+        expected: "Alice\nAlice",
+        starter: `const user = {\n  name: "Alice",\n  greet: function () {\n    console.log(this.name);\n    function innerGreet() {\n      console.log(this.name);\n    }\n    innerGreet();\n  }\n};\n\nuser.greet();`
+      },
+      {
+        id: 2,
+        topic: "Class 1 - this",
+        title: "Predict and Fix this with setTimeout",
+        prompt: "When timer.start() runs, callback should print Timer after 100ms.",
+        expected: "Timer",
+        starter: `const timer = {\n  name: "Timer",\n  start: function () {\n    setTimeout(function () {\n      console.log(this.name);\n    }, 100);\n  }\n};\n\ntimer.start();`
+      },
+      {
+        id: 3,
+        topic: "Class 1 + 4",
+        title: "Method Called Without Object (Lost this)",
+        prompt: "Implement bindBase(base) so fn(1,2) returns 13 for base 10.",
+        expected: "13",
+        starter: `const calc = {\n  base: 10,\n  add: function (a, b) {\n    return this.base + a + b;\n  }\n};\n\nfunction bindBase(base) {\n  // Return a function that takes (a, b) and returns base + a + b\n}\n\nconst fn = bindBase(10);\nconsole.log(fn(1, 2));`
+      },
+      {
+        id: 4,
+        topic: "Class 1 - this",
+        title: "Global vs Method this (Strict Mode)",
+        prompt: "Show this at top-level and in strict function call without object.",
+        expected: "[global/window/object]\nundefined",
+        starter: `"use strict";\n\nconsole.log(this);\n\nfunction showThis() {\n  console.log(this);\n}\n\nshowThis();`
+      },
+      {
+        id: 5,
+        topic: "Class 2 - Constructor",
+        title: "Constructor Function for Book + Prototype Method",
+        prompt: "Implement Book constructor and shared getInfo method on prototype.",
+        expected: "Clean Code by Robert Martin\nJS Guide by MDN",
+        starter: `function Book(title, author) {\n}\n\nBook.prototype.getInfo = function () {\n};\n\nconst b1 = new Book("Clean Code", "Robert Martin");\nconst b2 = new Book("JS Guide", "MDN");\nconsole.log(b1.getInfo());\nconsole.log(b2.getInfo());`
+      },
+      {
+        id: 6,
+        topic: "Class 2 - Constructor",
+        title: "Implement myNew (Polyfill for new)",
+        prompt: "Mimic new: prototype link, constructor call, object return rules.",
+        expected: "John\ntrue",
+        starter: `function myNew(Constructor, ...args) {\n}\n\nfunction Person(name) {\n  this.name = name;\n}\n\nconst person = myNew(Person, "John");\nconsole.log(person.name);\nconsole.log(person instanceof Person);`
+      },
+      {
+        id: 7,
+        topic: "Class 2 - Constructor",
+        title: "Factory Function vs Constructor",
+        prompt: "Build Car constructor and createCar factory; compare instanceof.",
+        expected: "Toyota - Camry\nHonda - Civic\ntrue\nfalse",
+        starter: `function Car(make, model) {\n}\n\nCar.prototype.describe = function () {\n};\n\nfunction createCar(make, model) {\n}\n\nconst c1 = new Car("Toyota", "Camry");\nconst c2 = createCar("Honda", "Civic");\nconsole.log(c1.describe());\nconsole.log(c2.describe());\nconsole.log(c1 instanceof Car);\nconsole.log(c2 instanceof Car);`
+      },
+      {
+        id: 8,
+        topic: "Class 2 - Constructor",
+        title: "Prototype Method Without Built-in Prototype Pollution",
+        prompt: "Add getId on Student.prototype and derive IDs using native map.",
+        expected: "[101,102]",
+        starter: `function Student(id, name) {\n}\n\nStudent.prototype.getId = function () {\n};\n\nconst students = [\n  new Student(101, "Ali"),\n  new Student(102, "Bina")\n];\n\nconst ids = [];\nconsole.log(ids);`
+      },
+      {
+        id: 9,
+        topic: "Class 3 - Classes",
+        title: "Class with Private Field and Static Counter",
+        prompt: "Build Order with #id, static count, getId and getCount.",
+        expected: "0\n1\n2",
+        starter: `class Order {\n  static count = 0;\n\n  constructor() {\n  }\n\n  getId() {\n  }\n\n  static getCount() {\n  }\n}\n\nconst o1 = new Order();\nconst o2 = new Order();\nconsole.log(o1.getId());\nconsole.log(o2.getId());\nconsole.log(Order.getCount());`
+      },
+      {
+        id: 10,
+        topic: "Class 3 - Classes",
+        title: "Inheritance with extends and super",
+        prompt: "Create Shape and Circle, override describe in Circle.",
+        expected: "Circle: Small, radius 5",
+        starter: `class Shape {\n  constructor(name) {\n  }\n\n  describe() {\n  }\n}\n\nclass Circle extends Shape {\n  constructor(name, radius) {\n  }\n\n  describe() {\n  }\n}\n\nconst c = new Circle("Small", 5);\nconsole.log(c.describe());`
+      },
+      {
+        id: 11,
+        topic: "Class 3 - Classes",
+        title: "Private Method and Public API",
+        prompt: "Create Validator with private #isEmpty and public validate.",
+        expected: "false\ntrue",
+        starter: `class Validator {\n  #isEmpty(str) {\n  }\n\n  validate(str) {\n  }\n}\n\nconst v = new Validator();\nconsole.log(v.validate(""));\nconsole.log(v.validate("hello"));`
+      },
+      {
+        id: 12,
+        topic: "Class 3 - Classes",
+        title: "Class with Getter and Private Field",
+        prompt: "Create Temperature with celsius and fahrenheit getters.",
+        expected: "25\n77",
+        starter: `class Temperature {\n  #celsius;\n\n  constructor(celsius) {\n  }\n\n  get celsius() {\n  }\n\n  get fahrenheit() {\n  }\n}\n\nconst t = new Temperature(25);\nconsole.log(t.celsius);\nconsole.log(t.fahrenheit);`
+      },
+      {
+        id: 13,
+        topic: "Class 4 - Closures",
+        title: "Closure Counter with Initial and Step",
+        prompt: "Implement createCounter with increment/decrement/getCount and private state.",
+        expected: "2\n4\n9",
+        starter: `function createCounter(initial, step) {\n  return {\n    increment() {\n    },\n    decrement() {\n    },\n    getCount() {\n    }\n  };\n}\n\nconst c1 = createCounter(0, 2);\nc1.increment();\nconsole.log(c1.getCount());\nc1.increment();\nconsole.log(c1.getCount());\nconst c2 = createCounter(10, 1);\nc2.decrement();\nconsole.log(c2.getCount());`
+      },
+      {
+        id: 14,
+        topic: "Class 4 - Closures",
+        title: "Memoized Add (Closure Cache)",
+        prompt: "Implement createMemoizedAdd so repeated input uses cached result.",
+        expected: "10\n10",
+        starter: `function createMemoizedAdd() {\n  return function (n) {\n  };\n}\n\nconst add = createMemoizedAdd();\nconsole.log(add(5));\nconsole.log(add(5));`
+      },
+      {
+        id: 15,
+        topic: "Class 4 - Closures",
+        title: "Private Bank Account with Closures",
+        prompt: "Create private balance with deposit/withdraw/getBalance methods.",
+        expected: "1500\n1300\n1300",
+        starter: `function createBankAccount(initialBalance) {\n  return {\n    deposit(amount) {\n    },\n    withdraw(amount) {\n    },\n    getBalance() {\n    }\n  };\n}\n\nconst acc = createBankAccount(1000);\nconsole.log(acc.deposit(500));\nconsole.log(acc.withdraw(200));\nconsole.log(acc.getBalance());`
+      },
+      {
+        id: 16,
+        topic: "Class 4 - Closures",
+        title: "Function Factory (Multiplier)",
+        prompt: "Implement createMultiplier and test double/triple with 7.",
+        expected: "14\n21",
+        starter: `function createMultiplier(factor) {\n  return function (n) {\n  };\n}\n\nconst double = createMultiplier(2);\nconst triple = createMultiplier(3);\nconsole.log(double(7));\nconsole.log(triple(7));`
+      },
+      {
+        id: 17,
+        topic: "Class 5 - Polyfills",
+        title: "Polyfill for Array.prototype.myMap",
+        prompt: "Implement myMap without using native map. Include thisArg support.",
+        expected: "[2,4,6]",
+        starter: `Array.prototype.myMap = function (callback, thisArg) {\n};\n\nconst arr = [1, 2, 3];\nconst result = arr.myMap(function (x) {\n  return x * 2;\n});\nconsole.log(result);`
+      },
+      {
+        id: 18,
+        topic: "Class 5 - Polyfills",
+        title: "Polyfill for Array.prototype.myFilter",
+        prompt: "Implement myFilter without using native filter.",
+        expected: "[2,4,6]",
+        starter: `Array.prototype.myFilter = function (callback, thisArg) {\n};\n\nconst arr = [1, 2, 3, 4, 5, 6];\nconst evens = arr.myFilter(function (x) {\n  return x % 2 === 0;\n});\nconsole.log(evens);`
+      },
+      {
+        id: 19,
+        topic: "Class 5 - Polyfills",
+        title: "Polyfill for Array.prototype.myReduce",
+        prompt: "Implement myReduce including initialValue and empty-array error rules.",
+        expected: "15\n15",
+        starter: `Array.prototype.myReduce = function (callback, initialValue) {\n};\n\nconst arr = [1, 2, 3, 4, 5];\nconst sum1 = arr.myReduce((acc, curr) => acc + curr, 0);\nconst sum2 = arr.myReduce((acc, curr) => acc + curr);\nconsole.log(sum1);\nconsole.log(sum2);`
+      },
+      {
+        id: 20,
+        topic: "Class 5 - HOFs",
+        title: "Chaining map, filter, reduce",
+        prompt: "Use native HOFs to produce 'Alice is adult; Charlie is adult'.",
+        expected: "Alice is adult; Charlie is adult",
+        starter: `const people = [\n  { name: "Alice", age: 25 },\n  { name: "Bob", age: 17 },\n  { name: "Charlie", age: 30 }\n];\n\nlet result;\nconsole.log(result);`
+      }
+    ];
+
+    const STORAGE_KEY = "advjs-practice-editor-v1";
+    const editor = document.getElementById("editor");
+    const output = document.getElementById("output");
+    const questionSelect = document.getElementById("questionSelect");
+    const questionList = document.getElementById("questionList");
+    const progressBar = document.getElementById("progressBar");
+    const progressText = document.getElementById("progressText");
+    const topicEl = document.getElementById("topic");
+    const titleEl = document.getElementById("questionTitle");
+    const promptEl = document.getElementById("questionPrompt");
+    const expectedEl = document.getElementById("expectedOutput");
+    const statusText = document.getElementById("statusText");
+    const markSolved = document.getElementById("markSolved");
+    const verdictEl = document.getElementById("verdict");
+    const autoSolve = document.getElementById("autoSolve");
+    const timerText = document.getElementById("timerText");
+    const startTimerBtn = document.getElementById("startTimerBtn");
+    const pauseTimerBtn = document.getElementById("pauseTimerBtn");
+    const resetTimerBtn = document.getElementById("resetTimerBtn");
+
+    let currentIndex = 0;
+    let currentIframe = null;
+    let currentRunId = 0;
+    let runLogLines = [];
+    let runHadError = false;
+
+    const EXAM_SECONDS = 120 * 60;
+    let timeLeft = EXAM_SECONDS;
+    let timerId = null;
+
+    const state = loadState();
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
+        return {
+          codeById: parsed.codeById || {},
+          solvedById: parsed.solvedById || {},
+          lastQuestionId: parsed.lastQuestionId || 1
+        };
+      } catch {
+        return { codeById: {}, solvedById: {}, lastQuestionId: 1 };
+      }
+    }
+
+    function persistState() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      statusText.textContent = "Saved at " + new Date().toLocaleTimeString();
+    }
+
+    function formatTime(totalSeconds) {
+      const mins = Math.floor(totalSeconds / 60);
+      const secs = totalSeconds % 60;
+      return String(mins).padStart(3, "0") + ":" + String(secs).padStart(2, "0");
+    }
+
+    function renderTimer() {
+      timerText.textContent = formatTime(timeLeft);
+    }
+
+    function startTimer() {
+      if (timerId) return;
+      timerId = setInterval(() => {
+        timeLeft = Math.max(0, timeLeft - 1);
+        renderTimer();
+        if (timeLeft === 0) {
+          clearInterval(timerId);
+          timerId = null;
+          statusText.textContent = "Time up. Review your weakest questions now.";
+        }
+      }, 1000);
+      statusText.textContent = "Exam timer running.";
+    }
+
+    function pauseTimer() {
+      if (!timerId) return;
+      clearInterval(timerId);
+      timerId = null;
+      statusText.textContent = "Exam timer paused.";
+    }
+
+    function resetTimer() {
+      pauseTimer();
+      timeLeft = EXAM_SECONDS;
+      renderTimer();
+      statusText.textContent = "Exam timer reset to 120:00.";
+    }
+
+    function normalizeOutput(text) {
+      return text
+        .replace(/\r/g, "")
+        .replace(/\[\s+/g, "[")
+        .replace(/\s+\]/g, "]")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function compareOutput(expected, actual) {
+      const expectedTrimmed = expected.trim();
+      if (expectedTrimmed === "[global/window/object]\nundefined") {
+        const lower = actual.toLowerCase();
+        const lines = actual.split("\n").map(l => l.trim().toLowerCase());
+        const hasGlobal = lines.some(l => l.includes("window") || l.includes("global") || l.includes("object") || l === "{}");
+        const hasUndefined = lines.some(l => l === "undefined");
+        return hasGlobal && hasUndefined && lines.length >= 2;
+      }
+      return normalizeOutput(expectedTrimmed) === normalizeOutput(actual);
+    }
+
+    function setVerdict(pass, details) {
+      verdictEl.className = "verdict" + (pass ? " good" : " bad");
+      verdictEl.textContent = details;
+    }
+
+    function evaluateRun() {
+      const q = getCurrentQuestion();
+      if (runHadError) {
+        setVerdict(false, "Incorrect: runtime error. Fix errors and run again.");
+        return;
+      }
+
+      const actualOutput = runLogLines.join("\n");
+      const passed = compareOutput(q.expected, actualOutput);
+
+      if (passed) {
+        setVerdict(true, "Correct: output matches expected for Q" + q.id + ".");
+        if (autoSolve.checked) {
+          state.solvedById[q.id] = true;
+          markSolved.checked = true;
+          refreshProgress();
+          refreshQuestionList();
+          persistState();
+        }
+      } else {
+        setVerdict(false, "Incorrect: output mismatch for Q" + q.id + ".");
+      }
+    }
+
+    function getCurrentQuestion() {
+      return QUESTIONS[currentIndex];
+    }
+
+    function setQuestion(index) {
+      currentIndex = Math.max(0, Math.min(index, QUESTIONS.length - 1));
+      const q = getCurrentQuestion();
+      state.lastQuestionId = q.id;
+      topicEl.textContent = q.topic;
+      titleEl.textContent = "Q" + q.id + ": " + q.title;
+      promptEl.textContent = q.prompt;
+      expectedEl.textContent = q.expected;
+      editor.value = state.codeById[q.id] || q.starter;
+      markSolved.checked = !!state.solvedById[q.id];
+      questionSelect.value = String(q.id);
+      refreshQuestionList();
+      refreshProgress();
+      persistState();
+      output.innerHTML = '<span class="muted">Console output will appear here.</span>';
+      verdictEl.className = "verdict";
+      verdictEl.textContent = "Run your code to check correctness.";
+    }
+
+    function refreshProgress() {
+      const solved = Object.values(state.solvedById).filter(Boolean).length;
+      const percent = (solved / QUESTIONS.length) * 100;
+      progressBar.style.width = percent + "%";
+      progressText.textContent = solved + " / " + QUESTIONS.length + " solved";
+    }
+
+    function refreshQuestionList() {
+      const activeId = getCurrentQuestion().id;
+      [...questionList.children].forEach((item, idx) => {
+        const btn = item.querySelector("button");
+        const q = QUESTIONS[idx];
+        btn.classList.toggle("active", q.id === activeId);
+        btn.classList.toggle("done", !!state.solvedById[q.id]);
+      });
+    }
+
+    function writeOutput(text, cssClass) {
+      const line = document.createElement("div");
+      if (cssClass) line.className = cssClass;
+      line.textContent = text;
+      output.appendChild(line);
+      output.scrollTop = output.scrollHeight;
+    }
+
+    function runCode() {
+      currentRunId += 1;
+      const runId = currentRunId;
+
+      if (currentIframe) {
+        currentIframe.remove();
+      }
+
+      output.textContent = "";
+      writeOutput("> Running Q" + getCurrentQuestion().id + "...", "muted");
+      runLogLines = [];
+      runHadError = false;
+
+      const userCode = editor.value;
+      const escaped = userCode.replace(/<\/script>/gi, "<\\/script>");
+
+      const harness = `
+        <script>
+          const runId = ${runId};
+          const send = (kind, payload) => {
+            parent.postMessage({ source: "advjs-practice-editor", runId, kind, payload }, "*");
+          };
+
+          const wrap = (fnName) => {
+            const original = console[fnName];
+            console[fnName] = function (...args) {
+              send("log", { type: fnName, text: args.map(a => {
+                try { return typeof a === "string" ? a : JSON.stringify(a); }
+                catch { return String(a); }
+              }).join(" ") });
+              original.apply(console, args);
+            };
+          };
+
+          wrap("log");
+          wrap("error");
+          wrap("warn");
+
+          window.onerror = function (message, source, line, col) {
+            send("error", { text: message + " (line " + line + ":" + col + ")" });
+            return true;
+          };
+
+          window.onunhandledrejection = function (event) {
+            send("error", { text: "Unhandled Promise rejection: " + event.reason });
+          };
+
+          window._userCodeStr = ${JSON.stringify(userCode)};
+        <\/script>
+        <script>
+          eval(window._userCodeStr);
+          setTimeout(function () {
+            const send = (kind, payload) => {
+              parent.postMessage({ source: "advjs-practice-editor", runId: ${runId}, kind, payload }, "*");
+            };
+            send("done", { text: "Execution completed." });
+          }, 500);
+        <\/script>
+      `;
+
+      currentIframe = document.createElement("iframe");
+      currentIframe.setAttribute("sandbox", "allow-scripts");
+      currentIframe.style.display = "none";
+      currentIframe.srcdoc = harness;
+      document.body.appendChild(currentIframe);
+    }
+
+    window.addEventListener("message", (event) => {
+      if (!event.data || event.data.source !== "advjs-practice-editor") return;
+      if (event.data.runId !== currentRunId) return;
+
+      const { kind, payload } = event.data;
+      if (kind === "log") {
+        const className = payload.type === "error" ? "err" : payload.type === "warn" ? "muted" : "ok";
+        writeOutput(payload.text, className);
+        if (payload.type === "error") {
+          runHadError = true;
+        }
+        runLogLines.push(payload.text);
+      } else if (kind === "error") {
+        writeOutput(payload.text, "err");
+        runHadError = true;
+      } else if (kind === "done") {
+        writeOutput(payload.text, "muted");
+        evaluateRun();
+      }
+    });
+
+    document.getElementById("runBtn").addEventListener("click", runCode);
+
+    document.getElementById("resetBtn").addEventListener("click", () => {
+      const q = getCurrentQuestion();
+      editor.value = q.starter;
+      state.codeById[q.id] = q.starter;
+      persistState();
+      statusText.textContent = "Starter restored.";
+    });
+
+    document.getElementById("copyBtn").addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(editor.value);
+        statusText.textContent = "Code copied to clipboard.";
+      } catch {
+        statusText.textContent = "Clipboard blocked by browser.";
+      }
+    });
+
+    document.getElementById("clearAllBtn").addEventListener("click", () => {
+      const confirmClear = confirm("Clear all saved code and solved status?");
+      if (!confirmClear) return;
+      localStorage.removeItem(STORAGE_KEY);
+      state.codeById = {};
+      state.solvedById = {};
+      setQuestion(0);
+      statusText.textContent = "All saved state cleared.";
+    });
+
+    document.getElementById("exportBtn").addEventListener("click", () => {
+      const dataStr = JSON.stringify(state, null, 2);
+      const blob = new Blob([dataStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      a.download = `advjs-practice-backup-${timestamp}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      statusText.textContent = "Progress exported successfully.";
+    });
+
+    document.getElementById("importBtn").addEventListener("click", () => {
+      document.getElementById("importFile").click();
+    });
+
+    document.getElementById("importFile").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (evt) => {
+        try {
+          const imported = JSON.parse(evt.target.result);
+          state.codeById = imported.codeById || {};
+          state.solvedById = imported.solvedById || {};
+          state.lastQuestionId = imported.lastQuestionId || 1;
+          persistState();
+          const lastIdx = Math.max(0, QUESTIONS.findIndex((q) => q.id === state.lastQuestionId));
+          setQuestion(lastIdx);
+          statusText.textContent = "Progress imported successfully! " + Object.keys(state.solvedById).filter(k => state.solvedById[k]).length + " questions restored.";
+        } catch (err) {
+          statusText.textContent = "Import failed: invalid file format.";
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    });
+
+    document.getElementById("prevBtn").addEventListener("click", () => setQuestion(currentIndex - 1));
+    document.getElementById("nextBtn").addEventListener("click", () => setQuestion(currentIndex + 1));
+    startTimerBtn.addEventListener("click", startTimer);
+    pauseTimerBtn.addEventListener("click", pauseTimer);
+    resetTimerBtn.addEventListener("click", resetTimer);
+
+    questionSelect.addEventListener("change", (e) => {
+      const id = Number(e.target.value);
+      const idx = QUESTIONS.findIndex((q) => q.id === id);
+      setQuestion(idx);
+    });
+
+    markSolved.addEventListener("change", () => {
+      const q = getCurrentQuestion();
+      state.solvedById[q.id] = markSolved.checked;
+      persistState();
+      refreshProgress();
+      refreshQuestionList();
+    });
+
+    let saveTimer = null;
+    editor.addEventListener("input", () => {
+      const q = getCurrentQuestion();
+      state.codeById[q.id] = editor.value;
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(persistState, 300);
+      statusText.textContent = "Typing...";
+    });
+
+    function init() {
+      renderTimer();
+      QUESTIONS.forEach((q) => {
+        const option = document.createElement("option");
+        option.value = String(q.id);
+        option.textContent = "Q" + q.id + " - " + q.title;
+        questionSelect.appendChild(option);
+
+        const li = document.createElement("li");
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.textContent = "Q" + q.id + " " + q.title;
+        btn.addEventListener("click", () => setQuestion(q.id - 1));
+        li.appendChild(btn);
+        questionList.appendChild(li);
+      });
+
+      const lastIdx = Math.max(0, QUESTIONS.findIndex((q) => q.id === state.lastQuestionId));
+      setQuestion(lastIdx);
+    }
+
+    init();
+  </script>
+</body>
+</html>

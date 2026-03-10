@@ -17,17 +17,17 @@ Pizaa.prototype.serve = function () {
 };
 
 
-let pizza1 = new Pizaa("Medium", ["cheese", "tomato"], "Veg", "Thin");
+let p1 = new Pizaa("Medium", ["cheese", "tomato"], "Veg", "Thin");
 
-let pizza2 = new Pizaa("Small", ["cheese", "onion"], "Veg", "Thick");
+let p2 = new Pizaa("Small", ["cheese", "onion"], "Veg", "Thick");
 
 let pizza5 = new Pizaa("Small", ["cheese", "onion"], "Veg", "Thick");
-console.log(pizza1);
-console.log(pizza2);
+console.log(p1);
+console.log(p2);
 console.log(pizza5);
 
-pizza1.serve();
-pizza2.serve()
+p1.serve();
+p2.serve()
 
 // 2nd way
 
